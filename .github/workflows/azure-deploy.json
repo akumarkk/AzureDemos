@@ -25,7 +25,7 @@
         },
         "sku": {
             "type": "string",
-            "defaultValue": "F1",
+            "defaultValue": "B1",
             "metadata": {
                 "description": "The SKU for the App Service plan."
             }

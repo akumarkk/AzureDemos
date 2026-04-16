@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "rFATJMxOGHI=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\v-akonasal\\peranikris\\AzureDemos\\API\\TestASApi\\AirTravelApi\\AirTravelApi.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\v-akonasal\\.nuget\\packages\\microsoft.aspnetcore.openapi\\11.0.0-preview.1.26104.118\\microsoft.aspnetcore.openapi.11.0.0-preview.1.26104.118.nupkg.sha512",
+    "C:\\Users\\v-akonasal\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

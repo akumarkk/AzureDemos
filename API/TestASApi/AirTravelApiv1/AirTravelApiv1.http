@@ -1,0 +1,13 @@
+@AirTravelApiv1_HostAddress = http://localhost:5217
+
+#if (EnableOpenAPI)
+GET {{AirTravelApiv1_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+#endif
+
+GET {{AirTravelApiv1_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

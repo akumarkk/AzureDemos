@@ -26,12 +26,12 @@ jobs:
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
-        working-directory: ./API/AirTravelApiv1
+        working-directory: ./API/TestASApi/AirTravelApiv1
 
       - name: dotnet publish
         run: |
           dotnet publish -c Release -o ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-        working-directory: ./API/AirTravelApiv1
+        working-directory: ./API/TestASApi/AirTravelApiv1
           
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

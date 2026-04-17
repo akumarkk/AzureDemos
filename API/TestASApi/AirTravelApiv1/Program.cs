@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Console.WriteLine($"env : {Environment.GetEnvironmentVariable("AZURE_Travel_APPCONFIG")}");
+Console.WriteLine($"env AZURE_Travel_APPCONFIG : {Environment.GetEnvironmentVariable("AZURE_Travel_APPCONFIG")}");
 var appConfigEndpoint = Environment.GetEnvironmentVariable("AZURE_Travel_APPCONFIG") ?? "https://craft-travel-config.azconfig.io";
 if (!string.IsNullOrEmpty(appConfigEndpoint))
 {
@@ -29,6 +29,7 @@ else
     Console.WriteLine("AZURE_Travel_APPCONFIG environment variable not set. Skipping Azure App Configuration.");
 }
 
+Console.WriteLine("Successfully starting....");
 // Add services to the container.
 
 builder.Services.AddControllers();

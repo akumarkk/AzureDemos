@@ -37,7 +37,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ./API/TestASApi/AirTravelApiv1/publish
+          path: API/TestASApi/AirTravelApiv1/publish
 
   deploy-infra:
     runs-on: ubuntu-latest

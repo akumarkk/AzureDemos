@@ -105,6 +105,10 @@
         "webAppUrl": {
             "type": "string",
             "value": "[concat('https://', parameters('webAppName'), '.azurewebsites.net')]"
-        }
+        },
+        "appConfigEndpoint": {
+        "type": "string",
+        "value": "[reference(parameters('appConfigStoreName')).endpoint]"
+    }
     }
 }

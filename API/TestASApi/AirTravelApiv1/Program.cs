@@ -26,6 +26,11 @@ if (!string.IsNullOrEmpty(appConfigEndpoint))
 else
 {
     Console.WriteLine("AZURE_Travel_APPCONFIG environment variable not set. Skipping Azure App Configuration.");
+    builder.Configuration.AddAzureAppConfiguration(options =>
+        {
+            options.Connect(new Uri("https://craft-travel-config.azconfig.io"), new DefaultAzureCredential());
+        });
+        Console.WriteLine("Successfully connected to Azure App Configuration.");
 }
 
 // Add services to the container.

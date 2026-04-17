@@ -43,6 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment: 'Production'
+    outputs:
+      appConfigEndpoint: ${{ steps.arm.outputs.appConfigEndpoint }}
     steps:
       - uses: actions/checkout@v4
 
@@ -93,3 +95,5 @@ jobs:
           package: '.'
           app-settings: |
             AZURE_Travel_APPCONFIG=${{ needs.deploy-infra.outputs.appConfigEndpoint }}
+
+      

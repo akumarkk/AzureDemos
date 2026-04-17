@@ -9,10 +9,23 @@ var builder = WebApplication.CreateBuilder(args);
 var appConfigEndpoint = Environment.GetEnvironmentVariable("AZURE_Travel_APPCONFIG");
 if (!string.IsNullOrEmpty(appConfigEndpoint))
 {
-    builder.Configuration.AddAzureAppConfiguration(options =>
+    Console.WriteLine($"Attempting to connect to Azure App Configuration: {appConfigEndpoint}");
+    try
     {
-        options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential());
-    });
+        builder.Configuration.AddAzureAppConfiguration(options =>
+        {
+            options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential());
+        });
+        Console.WriteLine("Successfully connected to Azure App Configuration.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to connect to Azure App Configuration: {ex.Message}");
+    }
+}
+else
+{
+    Console.WriteLine("AZURE_Travel_APPCONFIG environment variable not set. Skipping Azure App Configuration.");
 }
 
 // Add services to the container.

@@ -29,10 +29,49 @@
             "metadata": {
                 "description": "The SKU for the App Service plan."
             }
+        },
+        "appConfigStoreName": {
+            "type": "string",
+            "defaultValue": "Craft-Travel-Config",
+            "metadata": {
+                "description": "The name of the App Configuration store."
+            }
         }
     },
     "variables": {},
     "resources": [
+        {
+            "type": "Microsoft.AppConfiguration/configurationStores",
+            "apiVersion": "2023-03-01",
+            "name": "[parameters('appConfigStoreName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "standard"
+            },
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+            "apiVersion": "2023-03-01",
+            "name": "[concat(parameters('appConfigStoreName'), '/stripepaymenturl')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]"
+            ],
+            "properties": {
+                "value": "https://stripe.com/payment"
+            }
+        },
+        {
+            "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+            "apiVersion": "2023-03-01",
+            "name": "[concat(parameters('appConfigStoreName'), '/copilotchaturl')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.AppConfiguration/configurationStores', parameters('appConfigStoreName'))]"
+            ],
+            "properties": {
+                "value": "https://copilot.chat"
+            }
+        },
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2022-09-01",

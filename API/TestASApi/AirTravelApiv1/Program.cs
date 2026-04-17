@@ -16,7 +16,7 @@ if (!string.IsNullOrEmpty(appConfigEndpoint))
         builder.Configuration.AddAzureAppConfiguration(options =>
         {
             options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential());
-        });
+        }, optional: true);
         Console.WriteLine("Successfully connected to Azure App Configuration.");
     }
     catch (Exception ex)

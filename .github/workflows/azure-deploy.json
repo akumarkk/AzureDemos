@@ -2,11 +2,14 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "webAppName": {
-            "type": "string",
-            "defaultValue": "craft-airtravel",
+        "webAppNames": {
+            "type": "array",
+            "defaultValue": [
+                "craft-airtravel",
+                "craft-airtravel-accomodations"
+            ],
             "metadata": {
-                "description": "The name of the web app to create."
+                "description": "The names of the web apps to create."
             }
         },
         "appServicePlanName": {
@@ -85,9 +88,13 @@
             }
         },
         {
+            "copy": {
+                "name": "webAppLoop",
+                "count": "[length(parameters('webAppNames'))]"
+            },
             "type": "Microsoft.Web/sites",
             "apiVersion": "2022-09-01",
-            "name": "[parameters('webAppName')]",
+            "name": "[parameters('webAppNames')[copyIndex()]]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
@@ -102,13 +109,16 @@
         }
     ],
     "outputs": {
-        "webAppUrl": {
-            "type": "string",
-            "value": "[concat('https://', parameters('webAppName'), '.azurewebsites.net')]"
+        "webAppUrls": {
+            "type": "array",
+            "copy": {
+                "count": "[length(parameters('webAppNames'))]",
+                "input": "[concat('https://', parameters('webAppNames')[copyIndex()], '.azurewebsites.net')]"
+            }
         },
         "appConfigEndpoint": {
-        "type": "string",
-        "value": "[reference(parameters('appConfigStoreName')).endpoint]"
-    }
+            "type": "string",
+            "value": "[reference(parameters('appConfigStoreName')).endpoint]"
+        }
     }
 }

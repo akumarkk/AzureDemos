@@ -62,15 +62,8 @@ jobs:
           inlineScript: |
             az group create --name craft-travel-app --location "East US"
 
-      - name: Deploy ARM Template
-        id: arm
-        uses: azure/arm-deploy@v1
-        with:
-          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: craft-travel-app
-          template: ./.github/workflows/azure-deploy.json
-          parameters: override.json
-      - run: |
+      - name: Create parameters file
+        run: |
           echo '{
             "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
             "contentVersion": "1.0.0.0",
@@ -83,6 +76,15 @@ jobs:
               }
             }
           }' > override.json
+
+      - name: Deploy ARM Template
+        id: arm
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: craft-travel-app
+          template: ./.github/workflows/azure-deploy.json
+          parameters: override.json
 
   deploy:
     runs-on: ubuntu-latest

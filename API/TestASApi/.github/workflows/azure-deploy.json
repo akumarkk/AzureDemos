@@ -2,19 +2,20 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "webAppName": {
-            "type": "string",
-            "defaultValue": "craft-airtravel",
-            "metadata": {
-                "description": "The name of the web app to create."
-            }
-        },
-        "appServicePlanName": {
-            "type": "string",
-            "defaultValue": "craft-travel-sp",
-            "metadata": {
-                "description": "The name of the App Service plan."
-            }
+        "webApps": {
+            "type": "array",
+            "defaultValue": [
+                {
+                    "name": "craft-airtravel-accomodations",
+                    "servicePlan": "craft-travel-accomodations-sp",
+                    "netFrameworkVersion": "v8.0"
+                },
+                {
+                    "name": "craft-airtravel-api",
+                    "servicePlan": "craft-travel-api-sp",
+                    "netFrameworkVersion": "v11.0"
+                }
+            ]
         },
         "location": {
             "type": "string",
@@ -34,9 +35,13 @@
     "variables": {},
     "resources": [
         {
+            "copy": {
+                "name": "webAppLoop",
+                "count": "[length(parameters('webApps'))]"
+            },
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2022-09-01",
-            "name": "[parameters('appServicePlanName')]",
+            "name": "[parameters('webApps')[copyIndex()].servicePlan]",
             "location": "[parameters('location')]",
             "sku": {
                 "name": "[parameters('sku')]"
@@ -46,17 +51,21 @@
             }
         },
         {
+            "copy": {
+                "name": "webAppLoop",
+                "count": "[length(parameters('webApps'))]"
+            },
             "type": "Microsoft.Web/sites",
             "apiVersion": "2022-09-01",
-            "name": "[parameters('webAppName')]",
+            "name": "[parameters('webApps')[copyIndex()].name]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+                "[resourceId('Microsoft.Web/serverfarms', parameters('webApps')[copyIndex()].servicePlan)]"
             ],
             "properties": {
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('webApps')[copyIndex()].servicePlan)]",
                 "siteConfig": {
-                    "netFrameworkVersion": "v8.0"
+                    "netFrameworkVersion": "[parameters('webApps')[copyIndex()].netFrameworkVersion]"
                 }
             }
         }

@@ -7,13 +7,20 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: craft-airtravel   # set this to your application's name
-  AZURE_WEBAPP_PACKAGE_PATH: './publish'      # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: '11.0.x'           # set this to the dot net version to use
+  DOTNET_VERSION: '10.0.x'           # set this to the dot net version to use
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - name: AirTravelAccomodations
+            path: 'AirTravelAccomodations/AirTravelAccomodations.csproj'
+            webapp-name: 'craft-airtravel-accomodations'
+          - name: AirTravelApi
+            path: 'AirTravelApi/AirTravelApi.csproj'
+            webapp-name: 'craft-airtravel-api'
 
     steps:
       - uses: actions/checkout@v4
@@ -25,21 +32,21 @@ jobs:
           include-prerelease: true
 
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build ${{ matrix.project.path }} --configuration Release
 
       - name: dotnet publish
         run: |
-          dotnet publish -c Release -o ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          dotnet publish ${{ matrix.project.path }} -c Release -o ${{ matrix.project.name }}/publish
           
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          name: ${{ matrix.project.name }}
+          path: ${{ matrix.project.name }}/publish
 
   deploy-infra:
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-and-deploy
     environment: 'Production'
     steps:
       - uses: actions/checkout@v4
@@ -55,20 +62,25 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: craft-travel-app
           template: ./azure-deploy.json
-          parameters: 'webAppName=${{ env.AZURE_WEBAPP_NAME }}'
 
   deploy:
     runs-on: ubuntu-latest
     needs: deploy-infra
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    strategy:
+      matrix:
+        project:
+          - name: AirTravelAccomodations
+            webapp-name: 'craft-airtravel-accomodations'
+          - name: AirTravelApi
+            webapp-name: 'craft-airtravel-api'
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: ${{ matrix.project.name }}
       
       - name: Azure Login
         uses: azure/login@v1
@@ -79,6 +91,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: ${{ matrix.project.webapp-name }}
           slot-name: 'Production'
           package: .

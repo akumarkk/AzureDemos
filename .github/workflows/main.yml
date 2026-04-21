@@ -62,7 +62,7 @@ jobs:
           inlineScript: |
             az group create --name craft-travel-app --location "East US"
 
-      - name: Create parameters file
+      - name: Create parameters file - override.json
         run: |
           echo '{
             "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",

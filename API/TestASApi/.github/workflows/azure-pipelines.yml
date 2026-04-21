@@ -19,7 +19,7 @@ jobs:
             path: 'AirTravelAccomodations/AirTravelAccomodations.csproj'
             webapp-name: 'craft-airtravel-accomodations'
           - name: AirTravelApi
-            path: 'AirTravelApi/AirTravelApi.csproj'
+            path: 'AirTravelApiv1/AirTravelApiv1.csproj'
             webapp-name: 'craft-airtravel-api'
 
     steps:

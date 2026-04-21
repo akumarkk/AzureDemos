@@ -69,12 +69,20 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: craft-travel-app
           template: ./.github/workflows/azure-deploy.json
-          parameters: >
-            {
+          parameters: override.json
+      - run: |
+          echo '{
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
               "webAppNames": {
-                "value": ${{ toJSON(fromJSON('["${{ env.AZURE_WEBAPP_NAME }}", "${{ env.AZURE_WEBAPP_NAME }}-accomodations"]')) }}
+                "value": [
+                  "${{ env.AZURE_WEBAPP_NAME }}",
+                  "${{ env.AZURE_WEBAPP_NAME }}-accomodations"
+                ]
               }
             }
+          }' > override.json
 
   deploy:
     runs-on: ubuntu-latest

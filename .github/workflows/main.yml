@@ -48,6 +48,7 @@ jobs:
     environment: 'Production'
     outputs:
       appConfigEndpoint: ${{ steps.arm.outputs.appConfigEndpoint }}
+      appInsightsConnectionStrings: ${{ steps.arm.outputs.appInsightsConnectionStrings }}
     steps:
       - uses: actions/checkout@v4
 
@@ -116,5 +117,6 @@ jobs:
           package: '.'
           app-settings: |
             AZURE_Travel_APPCONFIG=${{ needs.deploy-infra.outputs.appConfigEndpoint }}
+            APPLICATIONINSIGHTS_CONNECTION_STRING=${{ fromJson(needs.deploy-infra.outputs.appInsightsConnectionStrings)[matrix.api == 'AirTravelApiv1' && 0 || 1] }}
 
       

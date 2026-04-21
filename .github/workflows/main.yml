@@ -69,7 +69,7 @@ jobs:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: craft-travel-app
           template: ./.github/workflows/azure-deploy.json
-          parameters: 'webAppName=${{ env.AZURE_WEBAPP_NAME }}'
+          parameters: 'webAppNames=["${{ env.AZURE_WEBAPP_NAME }}", "${{ env.AZURE_WEBAPP_NAME }}-accomodations"]'
 
   deploy:
     runs-on: ubuntu-latest

@@ -89,6 +89,20 @@
         },
         {
             "copy": {
+                "name": "appInsightsLoop",
+                "count": "[length(parameters('webAppNames'))]"
+            },
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[concat(parameters('webAppNames')[copyIndex()], '-insights')]",
+            "location": "[parameters('location')]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web"
+            }
+        },
+        {
+            "copy": {
                 "name": "webAppLoop",
                 "count": "[length(parameters('webAppNames'))]"
             },
@@ -119,6 +133,13 @@
         "appConfigEndpoint": {
             "type": "string",
             "value": "[reference(parameters('appConfigStoreName')).endpoint]"
+        },
+        "appInsightsConnectionStrings": {
+            "type": "array",
+            "copy": {
+                "count": "[length(parameters('webAppNames'))]",
+                "input": "[reference(resourceId('Microsoft.Insights/components', concat(parameters('webAppNames')[copyIndex()], '-insights'))).connectionString]"
+            }
         }
     }
 }

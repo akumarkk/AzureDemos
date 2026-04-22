@@ -138,6 +138,28 @@ jobs:
               }
             ]
 
+      - name: Set fallback environment variables
+        if: steps.deploy-to-webapp.outputs.webapp-url
+        shell: pwsh
+        run: |
+          $appSettings = az webapp config appsettings list --name "${{ env.AZURE_WEBAPP_NAME }}${{ matrix.api == 'AirTravelAccomodations' && '-accomodations' || '' }}" --resource-group craft-travel-app --query "[?name=='APPLICATIONINSIGHTS_CONNECTION_STRING' || name=='AZURE_Travel_APPCONFIG']" | ConvertFrom-Json
+          $appInsightsSetting = $appSettings | Where-Object { $_.name -eq 'APPLICATIONINSIGHTS_CONNECTION_STRING' }
+          $appConfigSetting = $appSettings | Where-Object { $_.name -eq 'AZURE_Travel_APPCONFIG' }
+
+          if (-not $appInsightsSetting) {
+            az webapp config appsettings set --name "${{ env.AZURE_WEBAPP_NAME }}${{ matrix.api == 'AirTravelAccomodations' && '-accomodations' || '' }}" --resource-group craft-travel-app --settings "APPLICATIONINSIGHTS_CONNECTION_STRING=${{ needs.deploy-infra.outputs.appInsightsConnectionString }}"
+            Write-Host "Set APPLICATIONINSIGHTS_CONNECTION_STRING as a fallback."
+          } else {
+            Write-Host "APPLICATIONINSIGHTS_CONNECTION_STRING is already set."
+          }
+
+          if (-not $appConfigSetting) {
+            az webapp config appsettings set --name "${{ env.AZURE_WEBAPP_NAME }}${{ matrix.api == 'AirTravelAccomodations' && '-accomodations' || '' }}" --resource-group craft-travel-app --settings "AZURE_Travel_APPCONFIG=${{ needs.deploy-infra.outputs.appConfigEndpoint }}"
+            Write-Host "Set AZURE_Travel_APPCONFIG as a fallback."
+          } else {
+            Write-Host "AZURE_Travel_APPCONFIG is already set."
+          }
+
       - name: Web App - Log Deployment Outputs
         run: |
           echo "Insights created: ${{ needs.deploy-infra.outputs.appInsightsConnectionString }}"

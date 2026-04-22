@@ -86,6 +86,12 @@ jobs:
           resourceGroupName: craft-travel-app
           template: ./.github/workflows/azure-deploy.json
           parameters: override.json
+          deploymentOutputs: appInsightsConnectionStrings, appConfigEndpoint
+
+      - name: Log Deployment Outputs
+        run: |
+          echo "Insights created: ${{ steps.arm.outputs.appInsightsConnectionStrings }}"
+          echo "App Config Endpoint: ${{ steps.arm.outputs.appConfigEndpoint }}"
 
   deploy:
     runs-on: ubuntu-latest

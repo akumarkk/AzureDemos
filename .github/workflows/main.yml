@@ -127,7 +127,7 @@ jobs:
 
       - name: Web App - Log Deployment Outputs
         run: |
-          echo "Insights created: ${{ steps.deploy-infra.outputs.appInsightsConnectionString }}"
-          echo "App Config Endpoint: ${{ steps.deploy-infra.outputs.appConfigEndpoint }}"
+          echo "Insights created: ${{ needs.deploy-infra.outputs.appInsightsConnectionString }}"
+          echo "App Config Endpoint: ${{ needs.deploy-infra.outputs.appConfigEndpoint }}"
 
       

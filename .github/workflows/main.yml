@@ -48,7 +48,7 @@ jobs:
     environment: 'Production'
     outputs:
       appConfigEndpoint: ${{ steps.arm.outputs.appConfigEndpoint }}
-      appInsightsConnectionStrings: ${{ steps.arm.outputs.appInsightsConnectionStrings }}
+      appInsightsConnectionString: ${{ steps.arm.outputs.appInsightsConnectionString }}
     steps:
       - uses: actions/checkout@v4
 
@@ -86,11 +86,11 @@ jobs:
           resourceGroupName: craft-travel-app
           template: ./.github/workflows/azure-deploy.json
           parameters: override.json
-          deploymentOutputs: appInsightsConnectionStrings, appConfigEndpoint
+          deploymentOutputs: appInsightsConnectionString, appConfigEndpoint
 
       - name: Log Deployment Outputs
         run: |
-          echo "Insights created: ${{ steps.arm.outputs.appInsightsConnectionStrings }}"
+          echo "Insights created: ${{ steps.arm.outputs.appInsightsConnectionString }}"
           echo "App Config Endpoint: ${{ steps.arm.outputs.appConfigEndpoint }}"
 
   deploy:
@@ -123,6 +123,11 @@ jobs:
           package: '.'
           app-settings: |
             AZURE_Travel_APPCONFIG=${{ needs.deploy-infra.outputs.appConfigEndpoint }}
-            APPLICATIONINSIGHTS_CONNECTION_STRING=${{ fromJson(needs.deploy-infra.outputs.appInsightsConnectionStrings)[matrix.api == 'AirTravelApiv1' && 0 || 1] }}
+            APPLICATIONINSIGHTS_CONNECTION_STRING=${{ needs.deploy-infra.outputs.appInsightsConnectionString }}
+
+      - name: Web App - Log Deployment Outputs
+        run: |
+          echo "Insights created: ${{ steps.deploy-infra.outputs.appInsightsConnectionString }}"
+          echo "App Config Endpoint: ${{ steps.deploy-infra.outputs.appConfigEndpoint }}"
 
       

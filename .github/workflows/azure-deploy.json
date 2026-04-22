@@ -39,6 +39,13 @@
             "metadata": {
                 "description": "The name of the App Configuration store."
             }
+        },
+        "appInsightsName": {
+            "type": "string",
+            "defaultValue": "craft-travel-insights",
+            "metadata": {
+                "description": "The name of the Application Insights resource."
+            }
         }
     },
     "variables": {},
@@ -88,13 +95,9 @@
             }
         },
         {
-            "copy": {
-                "name": "appInsightsLoop",
-                "count": "[length(parameters('webAppNames'))]"
-            },
             "type": "Microsoft.Insights/components",
             "apiVersion": "2020-02-02",
-            "name": "[concat(parameters('webAppNames')[copyIndex()], '-insights')]",
+            "name": "[parameters('appInsightsName')]",
             "location": "[parameters('location')]",
             "kind": "web",
             "properties": {
@@ -134,12 +137,9 @@
             "type": "string",
             "value": "[reference(parameters('appConfigStoreName')).endpoint]"
         },
-        "appInsightsConnectionStrings": {
-            "type": "array",
-            "copy": {
-                "count": "[length(parameters('webAppNames'))]",
-                "input": "[reference(resourceId('Microsoft.Insights/components', concat(parameters('webAppNames')[copyIndex()], '-insights'))).connectionString]"
-            }
+        "appInsightsConnectionString": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Insights/components', parameters('appInsightsName'))).connectionString]"
         }
     }
 }

@@ -124,6 +124,19 @@ jobs:
           app-settings: |
             AZURE_Travel_APPCONFIG=${{ needs.deploy-infra.outputs.appConfigEndpoint }}
             APPLICATIONINSIGHTS_CONNECTION_STRING=${{ needs.deploy-infra.outputs.appInsightsConnectionString }}
+          app-settings-json: |
+            [
+              {
+                "name": "AZURE_Travel_APPCONFIG",
+                "value": "${{ needs.deploy-infra.outputs.appConfigEndpoint }}",
+                "slotSetting": false
+              },
+              {
+                "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                "value": "${{ needs.deploy-infra.outputs.appInsightsConnectionString }}",
+                "slotSetting": false
+              }
+            ]
 
       - name: Web App - Log Deployment Outputs
         run: |

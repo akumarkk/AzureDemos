@@ -10,7 +10,7 @@ $Groups = az pipelines variable-group list --org $OrgUrl --project $Project --ou
 Write-Host "Searching for '$TargetVar' in $Project..." -ForegroundColor Cyan
 
 foreach ($Group in $Groups) {
-    Write-Host "Searching $Group..."
+    Write-Host "Searching $Group...\n"
     # Get details for the specific group
     $GroupDetails = az pipelines variable-group show --id $Group.id --org $OrgUrl --project $Project --output json | ConvertFrom-Json
     

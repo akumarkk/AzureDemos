@@ -1,0 +1,32 @@
+# ==========================================
+# Detach PIP from old NIC, then Attach to New NIC
+# ==========================================
+#
+# Troublishooting purpose only;
+
+$ResourceGroup = "rg"
+$OldNicName = "devmachineocai972_z3"
+$NewNicName = "devmachineocai972_z3_20260729113757"
+$PublicIpName = "DevMachineOCAI-pip"
+$NSGName = "DevMachineOCAI-nsg"
+
+Write-Host "Step 1: Detaching Public IP from old NIC if linked..." -ForegroundColor Cyan
+$OldNic = Get-AzNetworkInterface -Name $OldNicName -ResourceGroupName $ResourceGroup -ErrorAction SilentlyContinue
+if ($OldNic -and $OldNic.IpConfigurations[0].PublicIpAddress) {
+    $OldNic.IpConfigurations[0].PublicIpAddress = $null
+    Set-AzNetworkInterface -NetworkInterface $OldNic | Out-Null
+}
+
+Write-Host "Step 2: Fetching active NIC, PIP, and NSG..." -ForegroundColor Cyan
+$Nic = Get-AzNetworkInterface -Name $NewNicName -ResourceGroupName $ResourceGroup
+$PublicIp = Get-AzPublicIpAddress -Name $PublicIpName -ResourceGroupName $ResourceGroup
+$NSG = Get-AzNetworkSecurityGroup -Name $NSGName -ResourceGroupName $ResourceGroup
+
+Write-Host "Step 3: Assigning Public IP and NSG to the new NIC..." -ForegroundColor Cyan
+$Nic.IpConfigurations[0].PublicIpAddress = $PublicIp
+$Nic.NetworkSecurityGroup = $NSG
+
+Write-Host "Step 4: Committing changes to Azure..." -ForegroundColor Cyan
+Set-AzNetworkInterface -NetworkInterface $Nic | Out-Null
+
+Write-Host "Success! Public IP and NSG are now correctly attached." -ForegroundColor Green

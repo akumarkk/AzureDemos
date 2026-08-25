@@ -1,10 +1,17 @@
 namespace HostBuilderApp;
 
+using Microsoft.AspNetCore.Builder;    // For IApplicationBuilder
+using Microsoft.AspNetCore.Hosting;    // For IWebHostEnvironment
+using Microsoft.Extensions.Configuration; // For IConfiguration
+using Microsoft.Extensions.DependencyInjection;
+
+using HostBuilderApp.Services;
+
 public class Startup
 {
     public Startup(IConfiguration configuration)
     {
-        Configuration = configuration;
+        //Configuration = configuration;
     }
 
     public void ConfigureServices(IServiceCollection services)

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>HostBuilderApp</AssemblyName>
+    <RootNamespace>HostBuilderApp</RootNamespace>
+    <Version>$(AssemblyVersion)</Version>
+    <AssemblyVersion>1.0.8.5</AssemblyVersion>
+    <FileVersion>$(AssemblyVersion)</FileVersion>
+  </PropertyGroup>
+  </Project>

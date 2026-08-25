@@ -5,3 +5,5 @@ C:\Users\v-akonasal\peranikris\AzureDemos\API\HostBuilder\obj\Debug\net10.0\Host
 C:\Users\v-akonasal\peranikris\AzureDemos\API\HostBuilder\obj\Debug\net10.0\HostBuilder.csproj.CoreCompileInputs.cache
 C:\Users\v-akonasal\peranikris\AzureDemos\API\HostBuilder\obj\Debug\net10.0\HostBuilderApp.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\v-akonasal\peranikris\AzureDemos\API\HostBuilder\obj\Debug\net10.0\HostBuilder.sourcelink.json
+C:\Users\v-akonasal\peranikris\AzureDemos\API\HostBuilder\obj\Debug\net10.0\HostBuilder.csproj.AssemblyReference.cache
+C:\Users\v-akonasal\peranikris\AzureDemos\API\HostBuilder\obj\Debug\net10.0\HostBuilderApp.MvcApplicationPartsAssemblyInfo.cs

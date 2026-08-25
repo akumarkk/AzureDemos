@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis; // For ExcludeFromCodeCoverage
+using Microsoft.Extensions.Hosting;
+
 namespace HostBuilderApp
 {
     /// <summary>

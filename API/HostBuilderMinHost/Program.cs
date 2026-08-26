@@ -1,6 +1,13 @@
 using System.Diagnostics.CodeAnalysis; // For ExcludeFromCodeCoverage
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
+//using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+//using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
+using HostBuilderApp.Services;
+
 
 namespace HostBuilderApp
 {
@@ -64,6 +71,36 @@ namespace HostBuilderApp
                         services.AddHealthChecks().AddCheck<PingHealthCheckService>("PingHealthCheck");
 
                     });
+
+                    // 2. Configure HTTP Pipeline (MUST be called on webBuilder)
+                    webBuilder.Configure((hostContext, app) =>
+                    {
+                        var env = hostContext.HostingEnvironment;
+
+                        if (env.IsDevelopment())
+                        {
+                            app.UseDeveloperExceptionPage();
+                            app.UseSwagger();
+                            app.UseSwaggerUI(c =>
+                            {
+                                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                            });
+                        }
+
+                        app.UseHttpsRedirection();
+                        app.UseRouting();
+
+                        app.UseAuthentication();
+                        app.UseAuthorization();
+
+                        app.UseEndpoints(endpoints =>
+                        {
+                            endpoints.MapControllers();
+                            endpoints.MapHealthChecks("/healthcheck");
+                        });
+                    });
+
+                    
                 });
     }
 }

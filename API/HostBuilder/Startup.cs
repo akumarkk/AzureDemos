@@ -19,9 +19,12 @@ public class Startup
             services.AddControllers()
                 // Custom serialization converters
                 .AddJsonOptions(
-                    options =>
+                    options => 
+                    {
+                        // TODO: Add custom serialization converters here
+                    }
                         // DateTime objects should be in a certain format.
-                        options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter())
+                      //  options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter())
                 );
 
                 //Health checks ensure site is up and running
@@ -41,7 +44,8 @@ public class Startup
             // What environment are we deployed to?
             var environment = "Dev";
             // Swagger should only be available during development.  Never deploy to Test/QA/Production.
-            if (environment.IsDevelopment())
+            //if (environment.IsDevelopment())
+            if (string.Equals(environment, "Dev", StringComparison.OrdinalIgnoreCase))
             {
                 // Enable middleware to serve generated Swagger as a JSON endpoint.
                 app.UseSwagger();

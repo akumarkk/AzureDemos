@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis; // For ExcludeFromCodeCoverage
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Hosting;
 
 namespace HostBuilderApp
 {

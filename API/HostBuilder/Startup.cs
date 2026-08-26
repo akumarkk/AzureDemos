@@ -31,6 +31,13 @@ public class Startup
                       //  options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter())
                 );
 
+            // 1. Register API versioning
+            services.AddApiVersioning(options =>
+            {
+                options.ReportApiVersions = true;
+                options.AssumeDefaultVersionWhenUnspecified = true;
+            });
+            
             services.AddSwaggerGen(c =>
                 {
                     var version = typeof(Startup).Assembly.GetName().Version?.ToString() ?? "0.0.0.0";

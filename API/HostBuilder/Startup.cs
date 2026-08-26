@@ -6,6 +6,10 @@ using Microsoft.Extensions.Configuration; // For IConfiguration
 using Microsoft.Extensions.DependencyInjection;
 
 using HostBuilderApp.Services;
+using Swashbuckle.AspNetCore.Filters;
+using Microsoft.OpenApi.Models;
+
+using System;
 
 public class Startup
 {
@@ -26,6 +30,22 @@ public class Startup
                         // DateTime objects should be in a certain format.
                       //  options.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter())
                 );
+
+            services.AddSwaggerGen(c =>
+                {
+                    var version = typeof(Startup).Assembly.GetName().Version?.ToString() ?? "0.0.0.0";
+
+                    c.SwaggerDoc("v1", new OpenApiInfo
+                    {
+                        Title = "Craft API",
+                        Version = version,
+                        Description = "Purpose: Host builder demos <br /> " +
+                        "Owner: anikris <br /> " +
+                        "Repo Url: https://github.com/anikris/HostBuilderApp <br /> "
+                    });
+
+                    c.EnableAnnotations();
+                });
 
                 //Health checks ensure site is up and running
             services.AddHealthChecks().AddCheck<PingHealthCheckService>("PingHealthCheck");

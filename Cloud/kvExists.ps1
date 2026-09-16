@@ -9,6 +9,7 @@ param (
 Set-AzContext -Subscription $Subscription
 
 $env:AZURE_CLIENTS_SHOW_BREAKING_CHANGE_WARNINGS = $false
+Update-AzConfig -DisplayBreakingChangeWarning $false -Scope Process
 
 $Vaults = Get-AzKeyVault
 $TotalVaults = $Vaults.Count
@@ -40,5 +41,5 @@ Write-Progress -Activity "Checking Key Vaults for secret '$SecretName'" -Complet
 if ($Results) {
     $Results | Format-Table -AutoSize
 } else {
-    Write-Host "Secret '$SecretName' was not found in any Key Vault within subscription '$Subscription'." -ForegroundColor Yellow
+    Write-Host  "Secret '$SecretName' was not found in any Key Vault within subscription '$Subscription'." -ForegroundColor DarkYellow
 }

@@ -8,9 +8,20 @@ param (
 
 Set-AzContext -Subscription $Subscription
 
+$env:AZURE_CLIENTS_SHOW_BREAKING_CHANGE_WARNINGS = $false
+
 $Vaults = Get-AzKeyVault
+$TotalVaults = $Vaults.Count
+$CurrentCount = 0
+
 $Results = foreach ($Vault in $Vaults) {
+    $CurrentCount++
     $VaultName = $Vault.VaultName
+
+    Write-Progress -Activity "Checking Key Vaults for secret '$SecretName'" `
+                   -Status "Checking $VaultName ($CurrentCount of $TotalVaults)" `
+                   -PercentComplete (($CurrentCount / $TotalVaults) * 100)
+
     $Secret = Get-AzKeyVaultSecret -VaultName $VaultName -Name $SecretName -ErrorAction SilentlyContinue
     if ($Secret) {
         [PSCustomObject]@{
@@ -22,6 +33,9 @@ $Results = foreach ($Vault in $Vaults) {
         }
     }
 }
+
+# Complete the progress bar
+Write-Progress -Activity "Checking Key Vaults for secret '$SecretName'" -Completed
 
 if ($Results) {
     $Results | Format-Table -AutoSize

@@ -14,6 +14,7 @@ function Get-AllReporteesObjId {
     return $allReportees
 }
 
+
 # Run function
 #Get-AllReportees -UserId "reid.childress@alaskaair.com"
 

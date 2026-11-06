@@ -14,7 +14,8 @@ def add_sb_az_mesh_route(node_id: str, region: str = "az", message_body: str = "
     """Adds a service configuration point to the mesh topology and writes to Service Bus."""
     connection_string = os.environ["ServiceBusConnection"]
 
-    with ServiceBusClient.from_connection_string(connection_string,  retry_total=1, retry_backoff_factor=0.5) as client:
+    print(f"Connecting to Service Bus with connection {connection_string}")
+    with ServiceBusClient.from_connection_string(connection_string,  retry_total=7, retry_backoff_factor=0.5) as client:
         with client.get_queue_sender(queue_name=node_id) as sender:
             sender.send_messages(ServiceBusMessage(message_body))
 

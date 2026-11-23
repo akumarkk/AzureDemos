@@ -63,6 +63,49 @@ function Write-Log {
     Write-Host "[$timestamp] [$Level] $Message" -ForegroundColor $color
 }
 
+function Invoke-AzCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments
+    )
+
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = & az @Arguments 2>&1
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $prevEAP
+    }
+
+    $stdout = @($output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }) -join "`n"
+    $stderr = @($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { $_.ToString() }) -join "`n"
+
+    [PSCustomObject]@{
+        ExitCode = $exitCode
+        StdOut   = $stdout.Trim()
+        StdErr   = $stderr.Trim()
+    }
+}
+
+function ConvertFrom-AzJson {
+    param([string]$JsonText)
+
+    if ([string]::IsNullOrWhiteSpace($JsonText)) {
+        return @()
+    }
+
+    $parsed = $JsonText | ConvertFrom-Json
+    if ($null -eq $parsed) {
+        return @()
+    }
+    if ($parsed -is [System.Array]) {
+        return $parsed
+    }
+    return @($parsed)
+}
+
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Log "Starting Azure Activity Log resource query (lookback: ${Days}d, max-events: $MaxEvents)..."
 
@@ -73,23 +116,23 @@ if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
 
 if ([string]::IsNullOrWhiteSpace($Caller)) {
     Write-Log "Resolving current Azure CLI account..."
-    $Caller = (az account show --query "user.name" -o tsv 2>&1)
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($Caller)) {
-        Write-Log "Failed to get current Azure account. Run 'az login' first. Details: $Caller" -Level 'ERROR'
+    $acctRes = Invoke-AzCommand -Arguments @('account', 'show', '--query', 'user.name', '-o', 'tsv')
+    if ($acctRes.ExitCode -ne 0 -or [string]::IsNullOrWhiteSpace($acctRes.StdOut)) {
+        Write-Log "Failed to get current Azure account. Run 'az login' first. Details: $($acctRes.StdErr)" -Level 'ERROR'
         exit 1
     }
-    $Caller = $Caller.Trim()
+    $Caller = $acctRes.StdOut
 }
 Write-Log "Filtering activity logs for caller: $Caller"
 
 Write-Log "Fetching enabled subscriptions..."
-$subsJson = az account list --query "[?state=='Enabled'].{id:id, name:name}" -o json 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Write-Log "Failed to list subscriptions: $subsJson" -Level 'ERROR'
+$subsRes = Invoke-AzCommand -Arguments @('account', 'list', '--query', "[?state=='Enabled'].{id:id, name:name}", '-o', 'json')
+if ($subsRes.ExitCode -ne 0) {
+    Write-Log "Failed to list subscriptions: $($subsRes.StdErr)" -Level 'ERROR'
     exit 1
 }
 
-$subscriptions = @($subsJson | ConvertFrom-Json)
+$subscriptions = @(ConvertFrom-AzJson -JsonText $subsRes.StdOut)
 if ($SubscriptionIds -and $SubscriptionIds.Count -gt 0) {
     $subscriptions = @($subscriptions | Where-Object { $SubscriptionIds -contains $_.id })
 }
@@ -113,29 +156,33 @@ $index = 0
 
 foreach ($sub in $subscriptions) {
     $index++
-    Write-Log "[$index/$($subscriptions.Count)] Querying subscription '$($sub.name)' ($($sub.id))..."
+    $subId = [string]$sub.id
+    $subName = [string]$sub.name
+    Write-Log "[$index/$($subscriptions.Count)] Querying subscription '$subName' ($subId)..."
 
-    $rawOutput = az monitor activity-log list `
-        --subscription $sub.id `
-        --caller $Caller `
-        --offset "${Days}d" `
-        --max-events $MaxEvents `
-        --query $jmesFilter `
-        -o json 2>&1
+    $logRes = Invoke-AzCommand -Arguments @(
+        'monitor', 'activity-log', 'list',
+        '--subscription', $subId,
+        '--caller', $Caller,
+        '--offset', "${Days}d",
+        '--max-events', "$MaxEvents",
+        '--query', $jmesFilter,
+        '-o', 'json'
+    )
 
-    if ($LASTEXITCODE -ne 0) {
+    if ($logRes.ExitCode -ne 0) {
         $failedSubs++
-        Write-Log "Failed to query subscription '$($sub.name)' ($($sub.id)): $rawOutput" -Level 'WARN'
+        Write-Log "Failed to query subscription '$subName' ($subId): $($logRes.StdErr)" -Level 'WARN'
         continue
     }
 
-    $events = @($rawOutput | ConvertFrom-Json)
-    Write-Log "[$index/$($subscriptions.Count)] Found $($events.Count) matching event(s) in '$($sub.name)'." -Level $(if ($events.Count -gt 0) { 'SUCCESS' } else { 'INFO' })
+    $events = @(ConvertFrom-AzJson -JsonText $logRes.StdOut)
+    Write-Log "[$index/$($subscriptions.Count)] Found $($events.Count) matching event(s) in '$subName'." -Level $(if ($events.Count -gt 0) { 'SUCCESS' } else { 'INFO' })
 
     foreach ($evt in $events) {
         $allResults.Add([PSCustomObject]@{
-            Subscription  = $sub.name
-            SubId         = $sub.id
+            Subscription  = $subName
+            SubId         = $subId
             Time          = $evt.Time
             ResourceGroup = $evt.ResourceGroup
             Operation     = $evt.Operation

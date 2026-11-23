@@ -23,6 +23,9 @@
 
 .PARAMETER OutputCsv
     Optional file path to export the aggregated results as CSV.
+
+.PARAMETER ThrottleLimit
+    Maximum number of subscriptions to query in parallel. Defaults to 10.
 #>
 [CmdletBinding()]
 param(
@@ -38,7 +41,10 @@ param(
 
     [switch]$IncludeDeletes,
 
-    [string]$OutputCsv
+    [string]$OutputCsv,
+
+    [ValidateRange(1, 32)]
+    [int]$ThrottleLimit = 10
 )
 
 Set-StrictMode -Version Latest
@@ -123,6 +129,7 @@ if ([string]::IsNullOrWhiteSpace($Caller)) {
     }
     $Caller = $acctRes.StdOut
 }
+$Caller = $Caller.Trim().ToLowerInvariant()
 Write-Log "Filtering activity logs for caller: $Caller"
 
 Write-Log "Fetching enabled subscriptions..."
@@ -142,7 +149,7 @@ if ($subscriptions.Count -eq 0) {
     exit 0
 }
 
-Write-Log "Found $($subscriptions.Count) enabled subscription(s) to query."
+Write-Log "Found $($subscriptions.Count) enabled subscription(s) to query (parallelism: $ThrottleLimit)."
 
 $jmesFilter = if ($IncludeDeletes) {
     "[?operationName.value != null && (ends_with(operationName.value, '/write') || ends_with(operationName.value, '/delete')) && status.value == 'Succeeded'].{Time:eventTimestamp, ResourceGroup:resourceGroupName, Resource:resourceId, Operation:operationName.localizedValue}"
@@ -150,45 +157,148 @@ $jmesFilter = if ($IncludeDeletes) {
     "[?operationName.value != null && ends_with(operationName.value, '/write') && status.value == 'Succeeded'].{Time:eventTimestamp, ResourceGroup:resourceGroupName, Resource:resourceId, Operation:operationName.localizedValue}"
 }
 
-$allResults = [System.Collections.Generic.List[object]]::new()
-$failedSubs = 0
-$index = 0
-
-foreach ($sub in $subscriptions) {
-    $index++
-    $subId = [string]$sub.id
-    $subName = [string]$sub.name
-    Write-Log "[$index/$($subscriptions.Count)] Querying subscription '$subName' ($subId)..."
-
-    $logRes = Invoke-AzCommand -Arguments @(
-        'monitor', 'activity-log', 'list',
-        '--subscription', $subId,
-        '--caller', $Caller,
-        '--offset', "${Days}d",
-        '--max-events', "$MaxEvents",
-        '--query', $jmesFilter,
-        '-o', 'json'
+$workerScript = {
+    param(
+        [string]$SubId,
+        [string]$SubName,
+        [string]$Caller,
+        [int]$Days,
+        [int]$MaxEvents,
+        [string]$JmesFilter
     )
 
-    if ($logRes.ExitCode -ne 0) {
-        $failedSubs++
-        Write-Log "Failed to query subscription '$subName' ($subId): $($logRes.StdErr)" -Level 'WARN'
-        continue
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = & az monitor activity-log list `
+            --subscription $SubId `
+            --caller $Caller `
+            --offset "${Days}d" `
+            --max-events $MaxEvents `
+            --query $JmesFilter `
+            -o json 2>&1
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $prevEAP
     }
 
-    $events = @(ConvertFrom-AzJson -JsonText $logRes.StdOut)
-    Write-Log "[$index/$($subscriptions.Count)] Found $($events.Count) matching event(s) in '$subName'." -Level $(if ($events.Count -gt 0) { 'SUCCESS' } else { 'INFO' })
+    $stdout = (@($output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }) -join "`n").Trim()
+    $stderr = (@($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { $_.ToString() }) -join "`n").Trim()
 
-    foreach ($evt in $events) {
-        $allResults.Add([PSCustomObject]@{
-            Subscription  = $subName
-            SubId         = $subId
-            Time          = $evt.Time
-            ResourceGroup = $evt.ResourceGroup
-            Operation     = $evt.Operation
-            Resource      = $evt.Resource
+    if ($exitCode -ne 0) {
+        return [PSCustomObject]@{
+            SubId   = $SubId
+            SubName = $SubName
+            Success = $false
+            Error   = $stderr
+            Events  = @()
+        }
+    }
+
+    $events = @()
+    if (-not [string]::IsNullOrWhiteSpace($stdout)) {
+        $parsed = $stdout | ConvertFrom-Json
+        if ($null -ne $parsed) {
+            $events = if ($parsed -is [System.Array]) { $parsed } else { @($parsed) }
+        }
+    }
+
+    return [PSCustomObject]@{
+        SubId   = $SubId
+        SubName = $SubName
+        Success = $true
+        Error   = ''
+        Events  = $events
+    }
+}
+
+$allResults = [System.Collections.Generic.List[object]]::new()
+$failedSubs = 0
+$total = $subscriptions.Count
+$completed = 0
+
+$pool = [runspacefactory]::CreateRunspacePool(1, $ThrottleLimit)
+$pool.Open()
+$jobs = [System.Collections.Generic.List[object]]::new()
+
+try {
+    foreach ($sub in $subscriptions) {
+        $ps = [powershell]::Create()
+        $ps.RunspacePool = $pool
+        $null = $ps.AddScript($workerScript).
+            AddArgument([string]$sub.id).
+            AddArgument([string]$sub.name).
+            AddArgument($Caller).
+            AddArgument($Days).
+            AddArgument($MaxEvents).
+            AddArgument($jmesFilter)
+
+        $jobs.Add([PSCustomObject]@{
+            PowerShell = $ps
+            Handle     = $ps.BeginInvoke()
+            SubName    = [string]$sub.name
+            SubId      = [string]$sub.id
         })
     }
+
+    $pending = [System.Collections.Generic.List[object]]::new($jobs)
+    while ($pending.Count -gt 0) {
+        $doneIndex = -1
+        for ($i = 0; $i -lt $pending.Count; $i++) {
+            if ($pending[$i].Handle.IsCompleted) {
+                $doneIndex = $i
+                break
+            }
+        }
+
+        if ($doneIndex -lt 0) {
+            Start-Sleep -Milliseconds 100
+            continue
+        }
+
+        $job = $pending[$doneIndex]
+        $pending.RemoveAt($doneIndex)
+        $completed++
+
+        try {
+            $res = $job.PowerShell.EndInvoke($job.Handle) | Select-Object -First 1
+            if (-not $res.Success) {
+                $failedSubs++
+                Write-Log "[$completed/$total] Failed '$($job.SubName)' ($($job.SubId)): $($res.Error)" -Level 'WARN'
+                continue
+            }
+
+            $evtCount = @($res.Events).Count
+            $level = if ($evtCount -gt 0) { 'SUCCESS' } else { 'INFO' }
+            Write-Log "[$completed/$total] '$($res.SubName)' ($($res.SubId)): $evtCount event(s)." -Level $level
+
+            foreach ($evt in $res.Events) {
+                $allResults.Add([PSCustomObject]@{
+                    Subscription  = $res.SubName
+                    SubId         = $res.SubId
+                    Time          = $evt.Time
+                    ResourceGroup = $evt.ResourceGroup
+                    Operation     = $evt.Operation
+                    Resource      = $evt.Resource
+                })
+            }
+        }
+        catch {
+            $failedSubs++
+            Write-Log "[$completed/$total] Error in '$($job.SubName)' ($($job.SubId)): $_" -Level 'WARN'
+        }
+        finally {
+            $job.PowerShell.Dispose()
+        }
+    }
+}
+finally {
+    foreach ($job in $jobs) {
+        if ($job.PowerShell) { $job.PowerShell.Dispose() }
+    }
+    $pool.Close()
+    $pool.Dispose()
 }
 
 $stopwatch.Stop()

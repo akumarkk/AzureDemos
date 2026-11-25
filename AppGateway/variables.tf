@@ -1,7 +1,7 @@
 variable "subscription_id" {
   type        = string
-  description = "Azure Subscription ID"
-  default     = "REDACTED_SUBSCRIPTION_ID"
+  description = ""
+  default     = ""
 }
 
 variable "location" {

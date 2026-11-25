@@ -7,6 +7,10 @@ $Demo = @{
 }
 New-Item -ItemType Directory -Force $Demo.Logs | Out-Null
 
+# Terraform auto-loads *.auto.tfvars, so plain terraform commands pick up the subscription too (git-ignored).
+$sub = if ($env:ARM_SUBSCRIPTION_ID) { $env:ARM_SUBSCRIPTION_ID } else { az account show --query id -o tsv }
+"subscription_id = `"$sub`"" | Set-Content (Join-Path $Demo.Dir 'local.auto.tfvars') -Encoding ascii
+
 function Invoke-DemoTf {
     param([string]$Name, [string[]]$TfArgs, [int[]]$OkCodes = @(0))
     $log = Join-Path $Demo.Logs ('{0}-{1:yyyyMMdd-HHmmss}.log' -f $Name, (Get-Date))

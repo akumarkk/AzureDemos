@@ -1,7 +1,6 @@
 variable "subscription_id" {
   type        = string
-  description = ""
-  default     = ""
+  description = "Azure subscription ID; pass with -var at plan/apply time."
 }
 
 variable "location" {
@@ -23,4 +22,22 @@ variable "explicit_empty" {
   type        = bool
   default     = false
   description = "Set optional text fields to an empty string so config matches what Azure returns."
+}
+
+variable "backend_fqdn" {
+  type        = string
+  default     = "httpbin.org"
+  description = "Backend host for every pool; httpbin.org answers any path with 200."
+}
+
+variable "probe_path" {
+  type        = string
+  default     = "/status/200"
+  description = "Health probe path on the backend."
+}
+
+variable "backend_path_prefix" {
+  type        = string
+  default     = "/anything"
+  description = "Prefix for the per-app backend path override, e.g. /anything/alpha/."
 }

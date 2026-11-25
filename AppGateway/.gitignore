@@ -6,3 +6,4 @@ plan.txt
 plan.json
 logs/
 crash.log
+local.auto.tfvars

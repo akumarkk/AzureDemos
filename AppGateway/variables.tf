@@ -1,7 +1,7 @@
 variable "subscription_id" {
   type        = string
-  description = "FlightOperations.DEV.TEST"
-  default     = "ba19e6ca-9953-43f0-84b4-fbfa087f2958"
+  description = ""
+  default     = ""
 }
 
 variable "location" {

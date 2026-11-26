@@ -5,7 +5,10 @@ param(
     [string]$SiteName = 'VisOpsDemoSite',
     [string]$PoolName = 'VisOpsDemoAppPool',
     [string]$Path     = 'C:\inetpub\VisOpsDemoApp',
-    [int]$Port        = 8081
+    [int]$Port        = 8081,
+    [string]$DtTags       = 'primary_tags.app=craftops primary_tags.team=craftopsvisopsdemo primary_tags.env=local',
+    [string]$DtCustomProp = 'owner=anikris stage=dev',
+    [string]$DtClusterId  = $env:DT_CLUSTER_ID
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,6 +39,9 @@ if (-not (Get-Website -Name $SiteName)) {
     Set-ItemProperty "IIS:\Sites\$SiteName" physicalPath $Path
     Set-ItemProperty "IIS:\Sites\$SiteName" applicationPool $PoolName
 }
+
+# Pool is stopped here, so w3wp.exe picks up the new environment on start.
+& (Join-Path $PSScriptRoot 'Set-AppPoolEnv.ps1') -PoolName $PoolName -Tags $DtTags -CustomProp $DtCustomProp -ClusterId $DtClusterId
 
 Start-WebAppPool $PoolName
 if ((Get-WebsiteState $SiteName).Value -ne 'Started') { Start-Website $SiteName }

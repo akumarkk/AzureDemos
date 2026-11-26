@@ -4,7 +4,11 @@ Status: planned, not yet executed.
 
 These are stored in `applicationHost.config` under `<environmentVariables>` for the app pool and become part of the `w3wp.exe` environment block.
 
-## Commands (elevated)
+## Scripted
+
+`Deployment/Deploy-ToIIS.ps1` calls `Deployment/Set-AppPoolEnv.ps1` while the pool is stopped. It replaces existing values, so it is safe to re-run. Override values with `-DtTags`, `-DtCustomProp` and `-DtClusterId`.
+
+## Commands (elevated, manual)
 
 ```powershell
 $appcmd = "$env:windir\System32\inetsrv\appcmd.exe"

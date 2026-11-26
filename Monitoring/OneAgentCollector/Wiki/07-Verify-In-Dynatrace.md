@@ -4,7 +4,7 @@ Status: planned, not yet executed. Covers stage 3 of the flow.
 
 ## UI
 
-1. Open Hosts or Processes and find the `w3wp.exe` process for `DemoAppPool`.
+1. Open Hosts or Processes and find the `w3wp.exe` process for `VisOpsDemoAppPool`.
 2. Open the process or process group and check its properties and tags for `DT_TAGS`, `DT_CUSTOM_PROP` and `DT_CLUSTER_ID` values.
 
 ## API

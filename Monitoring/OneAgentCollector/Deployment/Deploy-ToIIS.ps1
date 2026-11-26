@@ -33,6 +33,11 @@ if ((Get-WebAppPoolState $PoolName).Value -ne 'Stopped') {
 dotnet publish $Project -c Release -o $Path --nologo
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed ($LASTEXITCODE)" }
 
+# The app pool identity needs write access for log4net to create app.log.
+$logDir = Join-Path $Path 'logs'
+New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+icacls $logDir /grant "IIS AppPool\${PoolName}:(OI)(CI)M" | Out-Null
+
 if (-not (Get-Website -Name $SiteName)) {
     New-Website -Name $SiteName -Port $Port -PhysicalPath $Path -ApplicationPool $PoolName | Out-Null
 } else {
@@ -48,5 +53,8 @@ if ((Get-WebsiteState $SiteName).Value -ne 'Started') { Start-Website $SiteName 
 
 & (Join-Path $PSScriptRoot 'Test-Smoke.ps1') -BaseUrl "http://localhost:$Port"
 if ($LASTEXITCODE -ne 0) { throw 'Smoke test failed.' }
+
+& (Join-Path $PSScriptRoot 'Test-SmokeEnv.ps1') -BaseUrl "http://localhost:$Port" -Tags $DtTags -CustomProp $DtCustomProp -ClusterId $DtClusterId -LogFile (Join-Path $Path 'logs\app.log')
+if ($LASTEXITCODE -ne 0) { throw 'Env smoke test failed.' }
 
 Write-Host "Deployed to http://localhost:$Port/ (try /env)"

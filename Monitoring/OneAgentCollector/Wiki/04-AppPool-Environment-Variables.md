@@ -11,11 +11,11 @@ $appcmd = "$env:windir\System32\inetsrv\appcmd.exe"
 $pool = "VisOpsDemoAppPool"   # site: VisOpsDemoSite, port 8081
 
 & $appcmd set config -section:system.applicationHost/applicationPools `
-  /+"[name='$pool'].environmentVariables.[name='DT_TAGS',value='app=fovisops team=visopsdemo env=local']" /commit:apphost
+  /+"[name='$pool'].environmentVariables.[name='DT_TAGS',value='primary_tags.app=fovisops primary_tags.team=visopsdemo primary_tags.env=local']" /commit:apphost
 & $appcmd set config -section:system.applicationHost/applicationPools `
   /+"[name='$pool'].environmentVariables.[name='DT_CUSTOM_PROP',value='owner=anikris stage=dev']" /commit:apphost
 & $appcmd set config -section:system.applicationHost/applicationPools `
-  /+"[name='$pool'].environmentVariables.[name='DT_CLUSTER_ID',value=$env:DT_CLUSTER_ID]" /commit:apphost
+  /+"[name='$pool'].environmentVariables.[name='DT_CLUSTER_ID',value='$env:DT_CLUSTER_ID']" /commit:apphost
 
 Restart-WebAppPool $pool
 ```

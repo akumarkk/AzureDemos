@@ -7,6 +7,7 @@ Goal: reproduce locally how Dynatrace OneAgent picks up `DT_TAGS`, `DT_CUSTOM_PR
 1. **Injection at start-up.** OneAgent installs a system-level hook on the host (on Windows, a service plus a loader injected into new processes). When IIS starts `w3wp.exe` for the app pool, the OneAgent code module loads into that process before the app code runs.
 2. **Reading the environment.** The module reads the process's own environment block. That block includes variables set for the app pool in IIS (`applicationHost.config` under `<environmentVariables>`), plus machine and user variables inherited at launch. `DT_TAGS`, `DT_CUSTOM_PROP`, `DT_CLUSTER_ID` and similar are read from there.
 3. **Reporting to the server.** The module sends the process metadata, including those tags, to the OneAgent service, which forwards it to Dynatrace. This is how they end up on the process and process group entities.
+4. **Logs (optional).** The app writes log4net files that include the same values. The OneAgent log module tails the file and Dynatrace ingests it according to ingest rules. See [step 8](08-Log-Monitoring.md).
 
 ## Steps
 
@@ -19,3 +20,4 @@ Goal: reproduce locally how Dynatrace OneAgent picks up `DT_TAGS`, `DT_CUSTOM_PR
 | 5 | [Install OneAgent](05-Install-OneAgent.md) | 1 | Not started |
 | 6 | [Verify injection into `w3wp.exe`](06-Verify-Injection.md) | 1 | Not started |
 | 7 | [Verify tags in Dynatrace](07-Verify-In-Dynatrace.md) | 3 | Not started |
+| 8 | [Ship application logs to Dynatrace](08-Log-Monitoring.md) | 4 | In progress |

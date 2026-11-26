@@ -34,9 +34,7 @@ dotnet publish $Project -c Release -o $Path --nologo
 if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed ($LASTEXITCODE)" }
 
 # The app pool identity needs write access for log4net to create app.log.
-$logDir = Join-Path $Path 'logs'
-New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-icacls $logDir /grant "IIS AppPool\${PoolName}:(OI)(CI)M" | Out-Null
+& (Join-Path $PSScriptRoot 'Initialize-LogDir.ps1') -PoolName $PoolName -Path $Path
 
 if (-not (Get-Website -Name $SiteName)) {
     New-Website -Name $SiteName -Port $Port -PhysicalPath $Path -ApplicationPool $PoolName | Out-Null

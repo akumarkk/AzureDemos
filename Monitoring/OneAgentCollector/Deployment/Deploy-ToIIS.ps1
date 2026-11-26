@@ -46,6 +46,9 @@ if (-not (Get-Website -Name $SiteName)) {
 # Pool is stopped here, so w3wp.exe picks up the new environment on start.
 & (Join-Path $PSScriptRoot 'Set-AppPoolEnv.ps1') -PoolName $PoolName -Tags $DtTags -CustomProp $DtCustomProp -ClusterId $DtClusterId
 
+# Host-level tags also cover logs that are not tied to a process.
+& (Join-Path $PSScriptRoot 'Set-OneAgentHostTags.ps1') -Tags $DtTags
+
 Start-WebAppPool $PoolName
 if ((Get-WebsiteState $SiteName).Value -ne 'Started') { Start-Website $SiteName }
 

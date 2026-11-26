@@ -8,14 +8,14 @@ These are stored in `applicationHost.config` under `<environmentVariables>` for 
 
 ```powershell
 $appcmd = "$env:windir\System32\inetsrv\appcmd.exe"
-$pool = "DemoAppPool"
+$pool = "VisOpsDemoAppPool"   # site: VisOpsDemoSite, port 8081
 
 & $appcmd set config -section:system.applicationHost/applicationPools `
-  /+"[name='$pool'].environmentVariables.[name='DT_TAGS',value='team=demo env=local']" /commit:apphost
+  /+"[name='$pool'].environmentVariables.[name='DT_TAGS',value='app=fovisops team=visopsdemo env=local']" /commit:apphost
 & $appcmd set config -section:system.applicationHost/applicationPools `
   /+"[name='$pool'].environmentVariables.[name='DT_CUSTOM_PROP',value='owner=anikris stage=dev']" /commit:apphost
 & $appcmd set config -section:system.applicationHost/applicationPools `
-  /+"[name='$pool'].environmentVariables.[name='DT_CLUSTER_ID',value='demo-cluster']" /commit:apphost
+  /+"[name='$pool'].environmentVariables.[name='DT_CLUSTER_ID',value=$env:DT_CLUSTER_ID]" /commit:apphost
 
 Restart-WebAppPool $pool
 ```
